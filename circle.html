@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>圆</title>
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+        #c1,
+        #c2 {
+            margin: 10px;
+            border: 1px solid black;
+        }
+    </style>
+    <script id="shader-vs" type="x-shader/vertex-shader">
+        attribute vec3 aPosition;
+        attribute vec3 aColor;
+
+        uniform mat4 uMatrix;
+
+        varying vec3 vColor;
+
+        void main() {
+            gl_Position = uMatrix * vec4(aPosition, 1.0);
+
+            vColor = aColor;
+        }
+    </script>
+    <script id="shader-fs" type="x-shader/fragment-shader">
+        precision highp float;
+
+        varying vec3 vColor;
+
+        void main() {
+            gl_FragColor = vec4(vColor, 1.0);
+        }
+    </script>
+</head>
+<body>
+    <div style="float:left;text-align:center;">
+        <canvas id="c1" width="200" height="200"></canvas>
+        <div>Canvas2D</div>
+    </div>
+    <div style="float:left;text-align:center;">
+        <canvas id="c2" width="200" height="200"></canvas>
+        <div>webgl</div>
+    </div>
+
+    <script>
+        // canvas2D画一个矩形
+        var oC1 = document.getElementById('c1');
+        var ctx1 = oC1.getContext('2d');
+        
+        ctx1.arc(100, 100, 50, 0, Math.PI * 2, false);
+        ctx1.fill();
+    </script>
+
+    <script>
+        // webgl画一个矩形
+        var oC2 = document.getElementById('c2');
+        var webgl = oC2.getContext('webgl');
+
+        var vsScript = document.getElementById('shader-vs').innerText;
+        var fsScript = document.getElementById('shader-fs').innerText;
+
+        var vs = webgl.createShader(webgl.VERTEX_SHADER);
+        var fs = webgl.createShader(webgl.FRAGMENT_SHADER);
+
+        webgl.shaderSource(vs, vsScript);
+        webgl.shaderSource(fs, fsScript);
+
+        webgl.compileShader(vs);
+        webgl.compileShader(fs);
+
+        if(!webgl.getShaderParameter(vs, webgl.COMPILE_STATUS)) {
+            alert('error');
+        }
+
+        if(!webgl.getShaderParameter(fs, webgl.COMPILE_STATUS)) {
+            alert('error');
+        }
+
+        var program = webgl.createProgram();
+
+        webgl.attachShader(program, vs);
+        webgl.attachShader(program, fs);
+
+        webgl.linkProgram(program);
+        webgl.useProgram(program);
+
+        var aPosition = webgl.getAttribLocation(program, 'aPosition');
+        var aColor = webgl.getAttribLocation(program, 'aColor');
+
+        webgl.enableVertexAttribArray(aPosition);
+
+        var uMatrix = webgl.getUniformLocation(program, 'uMatrix');
+
+        webgl.uniformMatrix4fv(uMatrix, false, [
+            1,  0,  0,  0,
+            0,  1,  0,  0,
+            0,  0,  -1,  0,
+            0,  0,  0,  1
+        ])
+
+        webgl.enable(webgl.DEPTH_TEST);
+
+        var angle;
+        var x, y;
+        var aPo = [0, 0, 0];
+        var aIndex = [];
+        var s = 1;
+        for(var i = 1; i <= 36; i++) {
+            angle = Math.PI * 2 * (i / 36);
+            x = Math.cos(angle) * 0.5;
+            y = Math.sin(angle) * 0.5;
+
+            aPo.push(x, y, 0);
+
+            aIndex.push(0, s, s+1);
+
+            s++;
+        }
+        // hack一下
+        aIndex[aIndex.length - 1] = 1;
+
+        webgl.bindBuffer(webgl.ARRAY_BUFFER, webgl.createBuffer());
+        webgl.bufferData(webgl.ARRAY_BUFFER, new Float32Array(aPo), webgl.STATIC_DRAW);
+        webgl.vertexAttribPointer(aPosition, 3, webgl.FLOAT, false, 0, 0);
+
+        webgl.vertexAttrib3f(aColor, 0, 0, 0);
+
+        webgl.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER, webgl.createBuffer());
+        webgl.bufferData(webgl.ELEMENT_ARRAY_BUFFER, new Uint16Array(aIndex), webgl.STATIC_DRAW);
+
+        webgl.drawElements(webgl.TRIANGLES, aIndex.length, webgl.UNSIGNED_SHORT, 0);
+    </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>test</title>
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+        #c {
+            margin: 0 auto;
+            display: block;
+        }
+    </style>
+    <script id="point-vs" type="x-shader/vertex-shader">
+        attribute vec3 aPosition;
+        attribute float aSize;
+
+        void main() {
+            gl_Position = vec4(aPosition, 1.0);
+            gl_PointSize = aSize;
+        }
+
+    </script>
+    <script id="point-fs" type="x-shader/vertex-shader">
+        precision highp float;
+
+        void main() {
+            float dist = distance(gl_PointCoord, vec2(0.5, 0.5));
+            if(dist < 0.5) {
+                gl_FragColor = vec4(0.9, 0.9, 0.8, pow((1.0 - dist * 2.0), 3.0));
+            } else {
+                discard;
+            }
+        }
+    </script>
+    <script id="text-vs" type="x-shader/vertex-shader">
+        attribute vec3 aPosition;
+        attribute vec2 aUv;
+
+        uniform mat4 uPMatrix;
+        uniform mat4 uMMatrix;
+        uniform mat4 uVMatrix;
+
+
+        varying vec2 vUv;
+
+        void main() {
+            vUv = aUv;
+
+            gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aPosition, 1.0);
+        }
+    </script>
+    <script id="text-fs" type="x-shader/fragment-shader">
+        precision highp float;
+
+        uniform sampler2D tex;
+
+        varying vec2 vUv;
+
+        void main() {
+            gl_FragColor = texture2D(tex, vUv);
+            
+        }
+    </script>
+</head>
+<body>
+    <canvas id="c" width="1024" height="800"></canvas>
+
+    <script src="./js/glMatrix.js"></script>
+    <script src="./js/text3d.js"></script>
+    <script src="./js/points.js"></script>
+    <script src="./js/program.js"></script>
+    <script>
+        var oC = document.getElementById('c');
+
+        oC.width = document.body.offsetWidth;
+        oC.height = document.body.offsetHeight;
+
+        var webgl = oC.getContext('webgl');
+
+        var textProgram = new Program({
+            name: 'text',
+            vs: 'text-vs',
+            fs: 'text-fs',
+            attributes: ['aPosition', 'aUv'],
+            uniforms: ['uPMatrix', 'uMMatrix', 'uVMatrix', 'tex']
+        });
+
+        var pointProgram = new Program({
+            name: 'point',
+            vs: 'point-vs',
+            fs: 'point-fs',
+            attributes: ['aPosition', 'aSize'],
+            uniforms: []
+        });
+
+        textProgram.use();
+
+        textProgram.execute('uniformMatrix4fv', 'uPMatrix', [
+            false, (function(a, r, n, f) {
+                a = 1 / Math.tan(a * Math.PI / 360);
+
+                return [
+                    a/r, 0, 0, 0,
+                    0, a, 0, 0,
+                    0, 0, -(f+n)/(f-n), -1,
+                    0, 0, -2*f*n/(f-n), 0
+                ];
+            })(90, oC.width / oC.height, 0.1, 100)
+        ]);
+
+        textProgram.execute('uniformMatrix4fv', 'uMMatrix', [
+            false, [
+                1,0,0,0,
+                0,1,0,0,
+                0,0,1,0,
+                0,0,0,1
+            ]
+        ]);
+
+        textProgram.execute('uniformMatrix4fv', 'uVMatrix', [
+            false, [
+                1,0,0,0,
+                0,Math.cos(0.32),Math.sin(0.32),0,
+                0,-Math.sin(0.32),Math.cos(0.32),0,
+                -1,0,-8,1
+            ]
+        ]);
+
+        textProgram.execute('uniform1i', 'tex', [
+            0
+        ]);
+
+
+
+        var configArr = [{
+            x: 0,
+            rotate: 0.01,
+            revolution: 1,
+            obj: './assets/a1.obj'
+        }, {
+            x: 1,
+            rotate: 0.07,
+            revolution: 4,
+            obj: './assets/l1.obj'
+        }, {
+            x: 2,
+            rotate: 0.05,
+            revolution: 4,
+            obj: './assets/l2.obj'
+        }, {
+            x: 3,
+            rotate: 0.04,
+            revolution: 4,
+            obj: './assets/o.obj'
+        }, {
+            x: 4,
+            rotate: 0.06,
+            revolution: 4,
+            obj: './assets/y.obj'
+        }, {
+            x: 5,
+            rotate: 0.05,
+            revolution: 4,
+            obj: './assets/t.obj'
+        }, {
+            x: 6,
+            rotate: 0.055,
+            revolution: 4,
+            obj: './assets/e.obj'
+        }, {
+            x: 7,
+            rotate: 0.06,
+            revolution: 4,
+            obj: './assets/a2.obj'
+        }, {
+            x: 8,
+            rotate: 0.052,
+            revolution: 4,
+            obj: './assets/m.obj'
+        }];
+
+        // var a1, l1, l2, o, y, t, e, a2, m;
+        var textArr = new Array(9);
+
+        for(var i = 0; i < textArr.length; i++) {
+            configArr[i].program = textProgram;
+            textArr[i] = new Text3d(configArr[i]);
+        }
+
+        
+
+        var points = new Points({
+            max: 40,
+            program: pointProgram
+        });
+
+        render();
+
+        var globalTime = 0;
+
+        function render() {
+            webgl.viewport(0, 0, oC.width, oC.height);
+
+            webgl.clearColor(0.1, 0.1, 0.1, 1.0);
+            webgl.clearDepth(1.0);
+
+            webgl.enable(webgl.DEPTH_TEST);
+
+            
+            setInterval(function(){
+                globalTime += 0.001;
+
+                webgl.clear(webgl.COLOR_BUFFER_BIT | webgl.DEPTH_BUFFER_BIT);
+
+                textProgram.use();
+
+                textArr.forEach(function(item) {
+                    item.render();
+                });
+
+                pointProgram.use();
+                
+                points.draw();
+
+            }, 16);
+
+        }
+        
+
+
+
+    </script>
+</body>
+</html>

@@ -57,7 +57,7 @@
         var arr = [];
         var self = this;
 
-        loadFile(src, function(result) {
+        loadFile('./assets/' + src, function(result) {
             arr = handleLine(result);
 
             arr.forEach(function(item) {
@@ -93,7 +93,7 @@
                 );
         };
 
-        image.src = this.mtl;
+        image.src = './assets/' + this.mtl;
     }
 
     Text3d.prototype.inited = function() {

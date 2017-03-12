@@ -34,9 +34,9 @@ webgl(shader和webgl环境代码忽略)
 
     webgl.drawElements(webgl.TRIANGLES, 6, webgl.UNSIGNED_SHORT, 0);
 
-完整代码地址：[]()
+完整代码地址：[https://vorshen.github.io/simple-3d-text-universe/rect.html](https://vorshen.github.io/simple-3d-text-universe/rect.html)
 结果：
-图图图图图图图图图图图图
+图图图图图图图图图
 
 圆：
 canvas2D
@@ -74,7 +74,7 @@ webgl
 
     webgl.drawElements(webgl.TRIANGLES, aIndex.length, webgl.UNSIGNED_SHORT, 0);
 
-完整代码地址：[]()
+完整代码地址：[https://vorshen.github.io/simple-3d-text-universe/circle.html](https://vorshen.github.io/simple-3d-text-universe/circle.html)
 结果：
 图图图图图图图图图图图图
 
@@ -84,7 +84,7 @@ webgl
 
 Obj文件简单来说就是包含一个3D模型信息的文件，这里信息包含：顶点、纹理、法线以及该3D模型中纹理所使用的贴图
 下面这个是一个obj文件的地址：
-[]()
+[https://vorshen.github.io/simple-3d-text-universe/assets/a1.obj](https://vorshen.github.io/simple-3d-text-universe/assets/a1.obj)
 
 ## 简单分析一下这个obj文件
 图图图图图图图图图图图图
@@ -108,6 +108,7 @@ F是面，后面分别对应 顶点索引 / 纹理坐标索引 / 法线索引
 这里大部分也都是我们非常常用的属性了，还有一些其他的，这里就不多说，可以google搜一下，很多介绍很详细的文章。
 如果有了obj文件，那我们的工作也就是将obj文件导入，然后读取内容并且按行解析就可以了。
 先放出最后的结果，一个模拟银河系的3D文字效果。
+在线地址查看:(https://vorshen.github.io/simple-3d-text-universe/index.html)[https://vorshen.github.io/simple-3d-text-universe/index.html]
 
 在这里顺便说一下，2D文字是可以通过分析获得3D文字模型数据的，将文字写到canvas上之后读取像素，获取路径。我们这里没有采用该方法，因为虽然这样理论上任何2D文字都能转3D，还能做出类似input输入文字，3D展示的效果。但是本文是教大家快速搭建一个小世界，所以我们还是采用blender去建模。
 

@@ -1,3 +1,4 @@
+地址：
 Webgl的魅力在于可以创造一个自己的3D世界，但相比较canvas2D来说，除了物体的移动旋转变换完全依赖矩阵增加了复杂度，就连生成一个物体都变得很复杂。
 
 什么？！为什么不用Threejs？Threejs等库确实可以很大程度的提高开发效率，而且各方面封装的非常棒，但是不推荐初学者直接依赖Threejs，最好是把webgl各方面都学会，再去拥抱Three等相关库。
@@ -34,9 +35,9 @@ webgl(shader和webgl环境代码忽略)
 
     webgl.drawElements(webgl.TRIANGLES, 6, webgl.UNSIGNED_SHORT, 0);
 
-完整代码地址：[]()
+完整代码地址：[https://vorshen.github.io/simple-3d-text-universe/rect.html](https://vorshen.github.io/simple-3d-text-universe/rect.html)
 结果：
-图图图图图图图图图图图图
+图图图图图图图图图
 
 圆：
 canvas2D
@@ -74,7 +75,7 @@ webgl
 
     webgl.drawElements(webgl.TRIANGLES, aIndex.length, webgl.UNSIGNED_SHORT, 0);
 
-完整代码地址：[]()
+完整代码地址：[https://vorshen.github.io/simple-3d-text-universe/circle.html](https://vorshen.github.io/simple-3d-text-universe/circle.html)
 结果：
 图图图图图图图图图图图图
 
@@ -84,7 +85,7 @@ webgl
 
 Obj文件简单来说就是包含一个3D模型信息的文件，这里信息包含：顶点、纹理、法线以及该3D模型中纹理所使用的贴图
 下面这个是一个obj文件的地址：
-[]()
+[https://vorshen.github.io/simple-3d-text-universe/assets/a1.obj](https://vorshen.github.io/simple-3d-text-universe/assets/a1.obj)
 
 ## 简单分析一下这个obj文件
 图图图图图图图图图图图图
@@ -108,6 +109,7 @@ F是面，后面分别对应 顶点索引 / 纹理坐标索引 / 法线索引
 这里大部分也都是我们非常常用的属性了，还有一些其他的，这里就不多说，可以google搜一下，很多介绍很详细的文章。
 如果有了obj文件，那我们的工作也就是将obj文件导入，然后读取内容并且按行解析就可以了。
 先放出最后的结果，一个模拟银河系的3D文字效果。
+在线地址查看:(https://vorshen.github.io/simple-3d-text-universe/index.html)[https://vorshen.github.io/simple-3d-text-universe/index.html]
 
 在这里顺便说一下，2D文字是可以通过分析获得3D文字模型数据的，将文字写到canvas上之后读取像素，获取路径。我们这里没有采用该方法，因为虽然这样理论上任何2D文字都能转3D，还能做出类似input输入文字，3D展示的效果。但是本文是教大家快速搭建一个小世界，所以我们还是采用blender去建模。
 
@@ -274,7 +276,9 @@ F是面，后面分别对应 顶点索引 / 纹理坐标索引 / 法线索引
 
 一眼望去uMMatrix(模型矩阵)里面有三个矩阵，为什么有三个呢，它们的顺序有什么要求么？
 因为矩阵不满足交换率，所以我们矩阵的平移和旋转的顺序十分重要，先平移再旋转和先旋转再平移有如下的差异
-图图图图图图图图图图图图
+(下面图片来源于网络)
+先旋转后平移：
+先平移后旋转：
 从图中明显看出来**先旋转后平移是自转**，而**先平移后旋转是公转**
 所以我们矩阵的顺序一定是 公转 * 平移 * 自转 * 顶点信息(右乘)
 这样一个3D文字的8大行星就形成啦

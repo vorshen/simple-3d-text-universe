@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no">
+    <title>Car</title>
+
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+
+        uniform mat4 uPMatrix;
+        uniform mat4 uVMatrix;
+
+        uniform mat4 uMMatrix;
+        uniform mat4 uRMatrix;
+        uniform mat4 uNMMatrix;
+        uniform mat4 uNRMatrix;
+
+        varying vec3 vNormal;
+        varying vec3 vEye;
+
+        void main() {
+            vec4 vertex = uMMatrix * uRMatrix * vec4(aPosition, 1.0);
+            vNormal = vec3(uNMMatrix * uNRMatrix * vec4(aNormal, 1.0));
+            vEye = -vec3((uVMatrix * vertex).xyz);
+
+            gl_Position = uPMatrix * uVMatrix * vertex;
+        }
+    </script>
+    <script id="shader-fs" type="x-shader/x-fragment">
+        precision highp float;
+
+        uniform float uShininess;
+        uniform vec3 uLightDirection;
+        uniform vec4 uLightAmbient;
+        uniform vec4 uLightDiffuse;
+        uniform vec4 uLightSpecular;
+        uniform vec4 uMaterialAmbient;
+        uniform vec4 uMaterialDiffuse;
+        uniform vec4 uMaterialSpecular;
+
+        varying vec3 vNormal;
+        varying vec3 vEye;
+
+        void main() {
+            vec3 L = normalize(uLightDirection);
+            vec3 N = normalize(vNormal);
+            float lambertTerm = dot(N, -L);
+
+            vec4 Ia = uLightAmbient * uMaterialAmbient;
+            vec4 Id = vec4(0.0, 0.0, 0.0, 1.0);
+            vec4 Is = vec4(0.0, 0.0, 0.0, 1.0);
+
+            if(lambertTerm > 0.0) {
+                Id = uLightDiffuse * uMaterialDiffuse * lambertTerm;
+
+                vec3 E = normalize(vEye);
+                vec3 R = reflect(L, N);
+                float specular = pow(max(dot(R, E), 0.0), uShininess);
+                Is = uLightSpecular * uMaterialSpecular * specular;
+            }
+
+            vec4 finalColor = Ia + Id + Is;
+            finalColor.a = 1.0;
+
+            gl_FragColor = finalColor;
+        }
+    </script>
+</head>
+<body>
+    <canvas id="c" width="1024" height="800"></canvas>
+    <script src="./js/glMatrix.js"></script>
+    <script>
+        var oC = document.getElementById('c');
+        var webgl = oC.getContext('webgl');
+
+        var vsScript = document.getElementById('shader-vs').innerHTML;
+        var fsScript = document.getElementById('shader-fs').innerHTML;
+
+        var vs = webgl.createShader(webgl.VERTEX_SHADER);
+        var fs = webgl.createShader(webgl.FRAGMENT_SHADER);
+
+        webgl.shaderSource(vs, vsScript);
+        webgl.shaderSource(fs, fsScript);
+
+        webgl.compileShader(vs);
+        webgl.compileShader(fs);
+
+        if(!webgl.getShaderParameter(vs, webgl.COMPILE_STATUS)) {
+            alert('vs error');
+        }
+
+        if(!webgl.getShaderParameter(fs, webgl.COMPILE_STATUS)) {
+            alert('fs error');
+        }
+
+        var programArr = [];
+
+        function initProgram(program) {
+            program.program = webgl.createProgram();
+
+            webgl.attachShader(program.program, vs);
+            webgl.attachShader(program.program, fs);
+
+            webgl.linkProgram(program.program);
+            webgl.useProgram(program.program);
+
+            program.aPosition = webgl.getAttribLocation(program.program, 'aPosition');
+            program.aNormal = webgl.getAttribLocation(program.program, 'aNormal');
+
+            webgl.enableVertexAttribArray(program.aPosition);
+            webgl.enableVertexAttribArray(program.aNormal);
+
+            program.uPMatrix = webgl.getUniformLocation(program.program, 'uPMatrix');
+            program.uVMatrix = webgl.getUniformLocation(program.program, 'uVMatrix');
+            program.uMMatrix = webgl.getUniformLocation(program.program, 'uMMatrix');
+            program.uRMatrix = webgl.getUniformLocation(program.program, 'uRMatrix');
+            program.uNMMatrix = webgl.getUniformLocation(program.program, 'uNMMatrix');
+            program.uNRMatrix = webgl.getUniformLocation(program.program, 'uNRMatrix');
+
+            program.uShininess = webgl.getUniformLocation(program.program, 'uShininess');
+            program.uLightDiffuse = webgl.getUniformLocation(program.program, 'uLightDiffuse');
+            program.uLightAmbient = webgl.getUniformLocation(program.program, 'uLightAmbient');
+            program.uLightSpecular = webgl.getUniformLocation(program.program, 'uLightSpecular');
+            program.uLightDirection = webgl.getUniformLocation(program.program, 'uLightDirection');
+            program.uMaterialDiffuse = webgl.getUniformLocation(program.program, 'uMaterialDiffuse');
+            program.uMaterialAmbient = webgl.getUniformLocation(program.program, 'uMaterialAmbient');
+            program.uMaterialSpecular = webgl.getUniformLocation(program.program, 'uMaterialSpecular');
+
+            program.indexData = [];
+
+            program.poData = [];
+        }
+        /*var program = webgl.createProgram();
+
+        webgl.attachShader(program, vs);
+        webgl.attachShader(program, fs);
+
+        webgl.linkProgram(program);
+        webgl.useProgram(program);
+
+        var aPosition = webgl.getAttribLocation(program, 'aPosition');
+        var aNormal = webgl.getAttribLocation(program, 'aNormal');
+
+        webgl.enableVertexAttribArray(aPosition);
+        webgl.enableVertexAttribArray(aNormal);
+
+        var uPMatrix = webgl.getUniformLocation(program, 'uPMatrix');
+        var uVMatrix = webgl.getUniformLocation(program, 'uVMatrix');
+        var uMMatrix = webgl.getUniformLocation(program, 'uMMatrix');
+        var uRMatrix = webgl.getUniformLocation(program, 'uRMatrix');
+        var uNMMatrix = webgl.getUniformLocation(program, 'uNMMatrix');
+        var uNRMatrix = webgl.getUniformLocation(program, 'uNRMatrix');*/
+
+        var matRotate = mat4.identity(mat4.create());
+        var matMove = mat4.identity(mat4.create());
+        var matNRotate = mat4.identity(mat4.create());
+        var matNMove = mat4.identity(mat4.create());
+
+        var poData = [];
+        // var indexData = [];
+
+        var i, j, k, s = 0;
+        var granularity = 72;
+
+        var obj;
+        var buf;
+
+        for(i = 1; i <= granularity; i++) {
+            obj = Object.create(null);
+
+            initProgram(obj);
+
+            programArr.push(obj);
+        }
+
+        for(i = 1; i <= granularity; i++) {
+            obj = programArr[i-1];
+
+            indexData = obj.indexData;
+            poData = obj.poData;
+
+            for(j = 1; j <= granularity; j++) {
+
+                k = [].concat(f(i, j), f(i, j-1), f(i-1, j-1), f(i-1, j));
+
+                poData.push.apply(poData, k);
+
+
+                k = [].concat(s, s+1, s+2, s, s+2, s+3);
+
+                s += 4;
+                indexData.push.apply(indexData, k);
+
+            }
+
+            poData = [];
+
+            s = 0;
+
+        }
+
+        for(i = 1; i <= granularity; i++) {
+            obj = programArr[i - 1];
+            // webgl.linkProgram(obj.program);
+            webgl.useProgram(obj.program);
+
+            webgl.uniformMatrix4fv(
+                obj.uPMatrix, false, (function(a, r, n, f) {
+                    a = 1 / Math.tan(a * Math.PI / 360);
+
+                    return [
+                        a/r, 0, 0, 0,
+                        0, a, 0, 0,
+                        0, 0, -(f+n)/(f-n), -1,
+                        0, 0, -2*f*n/(f-n), 0
+                    ];
+                })(90, oC.width/oC.height, 0.1, 100)
+            );
+
+            webgl.uniformMatrix4fv(
+                obj.uVMatrix, false, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,-8,1]
+            );
+
+            webgl.uniformMatrix4fv(
+                obj.uMMatrix, false, matMove
+            );
+
+            webgl.uniformMatrix4fv(
+                obj.uRMatrix, false, matRotate
+            );
+
+            webgl.uniformMatrix4fv(
+                obj.uNMMatrix, false, matNMove
+            );
+
+            webgl.uniformMatrix4fv(
+                obj.uNRMatrix, false, matNRotate
+            );
+
+            webgl.uniform3fv(obj.uLightDirection, [0.0, -1.0, -1.0]);
+            webgl.uniform4fv(obj.uLightAmbient, [0.01, 0.01, 0.01, 1.0]);
+            webgl.uniform4fv(obj.uLightDiffuse, [0.5, 0.5, 0.5, 1.0]);
+            webgl.uniform4fv(obj.uLightSpecular, [1.0, 1.0, 1.0, 1.0]);
+
+            webgl.uniform4fv(obj.uMaterialAmbient, [1.0, 1.0, 1.0, 1.0]);
+            webgl.uniform4fv(obj.uMaterialDiffuse, [0.5, 0.8, 0.1, 1.0]);
+            webgl.uniform4fv(obj.uMaterialSpecular, [1.0, 1.0, 1.0, 1.0]);
+            webgl.uniform1f(obj.uShininess, 230.0);
+
+        }
+
+
+        var colorArr = [];
+        var temp;
+        for(i = 1; i <= granularity; i++) {
+            temp = 0.8 - (i / granularity * 0.7);
+            colorArr.push([0.1, temp, 0.1, 1.0]);
+        }
+        
+        webgl.enable(webgl.DEPTH_TEST);
+
+        var a = 0;
+        setInterval(function(){
+            a += 0.1;
+            var s = Math.sin(a) / 10,
+                c = Math.cos(a) / 10;
+
+            /*mat4.rotate(matRotate, a, [0, 1, 0], matRotate);
+
+            webgl.uniformMatrix4fv(
+                uRMatrix, false, matRotate
+            );
+
+            mat4.inverse(mat4.transpose(matRotate, matNRotate), matNRotate);
+
+            webgl.uniformMatrix4fv(
+                uNRMatrix, false, matNRotate
+            );
+
+            mat4.translate(matMove, [c, 0, s], matMove);
+
+            webgl.uniformMatrix4fv(
+                uMMatrix, false, matMove
+            );
+
+            mat4.inverse(mat4.transpose(matMove, matNMove), matNMove);
+
+            webgl.uniformMatrix4fv(
+                uNMMatrix, false, matNMove
+            );*/
+            
+            for(i = 1; i <= granularity; i++) {
+                obj = programArr[i-1];
+                webgl.useProgram(obj.program);
+
+                buf = webgl.createBuffer();
+
+                webgl.bindBuffer(webgl.ARRAY_BUFFER, buf);
+                webgl.bufferData(webgl.ARRAY_BUFFER, new Float32Array(obj.poData), webgl.STATIC_DRAW);
+                webgl.vertexAttribPointer(obj.aPosition, 3, webgl.FLOAT, false, 0, 0);
+
+                buf = webgl.createBuffer();
+                webgl.bindBuffer(webgl.ARRAY_BUFFER, buf);
+                webgl.bufferData(webgl.ARRAY_BUFFER, new Float32Array(obj.poData), webgl.STATIC_DRAW);
+                webgl.vertexAttribPointer(obj.aNormal, 3, webgl.FLOAT, false, 0, 0);
+
+                buf = webgl.createBuffer();
+                webgl.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER, buf);
+                webgl.bufferData(webgl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indexData), webgl.STATIC_DRAW);
+
+                webgl.uniform4fv(obj.uMaterialDiffuse, colorArr[i-1]);
+                webgl.drawElements(webgl.TRIANGLES, granularity * 6, webgl.UNSIGNED_SHORT, 0);
+            }
+        }, 16);
+
+        function f(a, b) {
+            var a = Math.PI * a / granularity,
+                b = 2 * Math.PI * b / granularity,
+                l = Math.sin(a);
+
+            return [Math.sin(b) * l, Math.cos(a), Math.cos(b) * l];
+        }
+
+    </script>
+</body>
+</html>
